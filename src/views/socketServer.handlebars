@@ -1,0 +1,73 @@
+<h2>Products list</h2>
+<ul>
+    {{#each products}}
+    <li>
+        ${{this.price}} | {{this.title}} | {{this.description}}
+    </li>
+    {{/each}}
+</ul>
+
+<h2>Remove product</h2>
+<form id="product-id-form">
+    <label for="product-id">ID of the product to be removed:</label>
+    <input type="text" id="product-id" name="product-id" placeholder="Product ID">
+    <button type="button" onclick="removeProduct()">Remove product</button>
+</form>
+
+<h2>Write a message</h2>
+<form id="message-form">
+    <label for="message-input">Message:</label>
+    <input type="text" id="message-input" name="message-input" placeholder="Write ur message">
+    <button type="submit" onclick="sendMessage(event)">Send message</button>
+</form>
+
+
+<h2>Recent Messages</h2>
+<ul id="message-list"></ul>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    const sendMessage = (event) => {
+        event.preventDefault()
+
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value;
+
+        if (message.trim() === '') {
+            alert('Please, write a message before sending.');
+            return;
+        }
+
+        socket.emit('new_message', { message });
+
+        messageInput.value = '';
+    }
+
+    socket.on('initial_messages', (data) => {
+        console.log('Initial messages:', data.messages);
+
+        const messageList = document.getElementById('message-list');
+        data.messages.forEach((message) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = message;
+            messageList.appendChild(listItem);
+        });
+    });
+
+    socket.on('message_added', (data) => {
+        console.log('Nuevo mensaje agregado:', data.message);
+
+        const messageList = document.getElementById('message-list');
+        const listItem = document.createElement('li');
+        listItem.textContent = data.message;
+        messageList.appendChild(listItem);
+    })
+
+
+    const removeProduct = () => {
+        const productId = document.getElementById('product-id').value;
+        socket.emit('deleteProduct', productId);
+    }
+</script>
